@@ -54,7 +54,21 @@ for q in master['questions']:
     pq.append({'k': q.get('topicKey', ''), 'u': q['unit'], 'd': q['difficulty'],
                's': q['stem'], 'o': q['options'], 'a': q['answer'], 'e': q.get('explanation', '')})
 
-DATA = {'groups': groups, 'vocab': vocab, 'questions': pq}
+# 閱讀(文章+題目)
+rq_by_pid = {}
+for q in master['questions']:
+    if q['type'] == 'reading':
+        rq_by_pid.setdefault(q.get('passageId'), []).append(q)
+reading = []
+for p in master.get('passages', []):
+    if not p.get('hasText') or not (p.get('text') or '').strip():
+        continue
+    qs = rq_by_pid.get(p['passageId'], [])
+    reading.append({'g': p.get('genre', '文章'), 't': p.get('title', ''), 'x': p.get('text', ''),
+                    'qs': [{'s': q['stem'], 'o': q['options'], 'a': q['answer'], 'e': q.get('explanation', '')} for q in qs]})
+HAS_READING = len(reading) > 0
+
+DATA = {'groups': groups, 'vocab': vocab, 'questions': pq, 'reading': reading}
 data_js = 'const DATA=' + json.dumps(DATA, ensure_ascii=False, separators=(',', ':')) + ';'
 
 # ===== 首頁 cats：4 群組卡 + 單字卡 =====
@@ -68,10 +82,22 @@ for i, g in enumerate(groups):
                   f'<span class="badge">{len(g["topics"])} 主題</span>'
                   f'<p class="cd">{_html.escape(tnames)}…</p></div>')
 
+reading_tab = '<button data-view="reading">📖 閱讀</button>' if HAS_READING else ''
+reading_tile = (f'<div class="cat-tile t-phrase" data-view="reading" tabindex="0" role="button" aria-label="閱讀">'
+                f'<span class="ci">📖</span><h3>閱讀短文</h3><span class="badge">{len(reading)} 篇</span>'
+                f'<p class="cd">原創短文＋題目，附詳解</p></div>') if HAS_READING else ''
+reading_view = ('<div class="view" id="v-reading">'
+                '<div class="sec-head"><span class="ic">📖</span><h2>閱讀短文</h2>'
+                f'<span class="cnt">{len(reading)} 篇</span></div>'
+                '<div class="cmp">點開每篇載入文章與題目，正解已標示並附解析。</div>'
+                '<div id="readingBody"></div>'
+                '<div style="text-align:center"><button class="backtop" data-view="home">🏠 回首頁</button></div></div>') if HAS_READING else ''
+
 body = f'''<div class="wrap">
 <div class="tabbar">
   <button data-view="home">🏠 首頁</button>
   <button data-view="gram">🧩 文法重點</button>
+  {reading_tab}
   <button data-view="vocab">🔤 單字</button>
   <button data-view="practice">✏️ 練習</button>
 </div>
@@ -85,6 +111,7 @@ body = f'''<div class="wrap">
   <div id="installBar" style="margin:10px 0"></div>
   <p style="text-align:center;color:var(--soft);font-size:14.5px;margin:2px 0 4px">👇 點一類開始複習</p>
   <div class="cats">{cats_html}
+    {reading_tile}
     <div class="cat-tile t-vocab" data-view="vocab" tabindex="0" role="button" aria-label="高中單字">
       <span class="ci">🔤</span><h3>高中 6000 單字</h3><span class="badge">大考中心 6 級</span>
       <p class="cd">依級別分組，附詞性、中文與例句</p></div>
@@ -102,6 +129,8 @@ body = f'''<div class="wrap">
 
 <div class="view" id="v-gram"><div id="gramBody"></div>
   <div style="text-align:center"><button class="backtop" data-view="home">🏠 回首頁</button></div></div>
+
+{reading_view}
 
 <div class="view" id="v-vocab">
   <div class="sec-head"><span class="ic">🔤</span><h2>高中 6000 單字</h2><span class="cnt">{len(vocab)} 字</span></div>
@@ -144,6 +173,21 @@ function renderVocab(){const levels=[...new Set(VOCAB.map(v=>v.lv))].sort((a,b)=
     const lv=+body.dataset.lv, ws=VOCAB.filter(v=>v.lv===lv);let hh='<div class="wlist">';
     ws.forEach(v=>{hh+=`<div class="wcard"><div class="wh"><span class="w">${esc(v.w)}</span>${v.p?`<span class="wp">${esc(v.p)}</span>`:''}<span class="wz">${esc(v.z)}</span></div>${v.e?`<div class="wex">${esc(v.e)}</div>`:''}</div>`;});
     hh+='</div>';body.innerHTML=hh;body.dataset.done='1';}));}
+
+function renderReading(){const R=DATA.reading||[];if(!R.length||!$('readingBody'))return;
+  const byG={};R.forEach((p,i)=>{(byG[p.g]=byG[p.g]||[]).push(i);});
+  let h='';Object.keys(byG).forEach(g=>{h+=`<div class="grp-title">📖 ${esc(g)}（${byG[g].length} 篇）</div>`;
+    byG[g].forEach(i=>{const p=R[i];const snip=esc((p.t||p.x).slice(0,30));
+      h+=`<details class="pt"><summary><span class="freq lo">${p.qs.length} 題</span>${snip}…<span class="arrow">▶</span></summary><div class="body" data-ri="${i}"><div class="say">點開載入…</div></div></details>`;});});
+  $('readingBody').innerHTML=h;
+  $('readingBody').querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>{
+    if(!d.open)return;const body=d.querySelector('.body');if(body.dataset.done)return;
+    const p=R[+body.dataset.ri];const L=['A','B','C','D'];
+    let hh=`<div class="passage">${p.t?`<div class="pg">${esc(p.t)}</div>`:''}${esc(p.x).replace(/\n/g,'<br>')}</div>`;
+    p.qs.forEach((q,qi)=>{hh+=`<div class="qcard"><div class="stem">${qi+1}. ${esc(q.s)}</div><div class="opts">`;
+      q.o.forEach((o,oi)=>{hh+=`<div class="opt ${oi===q.a?'ok':'dis'}"><span class="lab">${L[oi]}</span><span>${esc(o)}</span></div>`;});
+      hh+=`</div><div class="fb show good"><div class="kp">✅ 正解 ${L[q.a]}</div>${esc(q.e)}</div></div>`;});
+    body.innerHTML=hh;body.dataset.done='1';}));}
 
 // ===== 練習 =====
 let pool=[],idx=0,score=0,wrongList=[];
@@ -200,7 +244,7 @@ function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggl
   window.scrollTo({top:0,behavior:'auto'});}
 document.querySelectorAll('[data-view]').forEach(el=>{el.addEventListener('click',()=>show(el.dataset.view));
   el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show(el.dataset.view);}});});
-renderGram();renderVocab();practiceHome();show('home');
+renderGram();renderVocab();renderReading();practiceHome();show('home');
 let _saved=[];
 window.addEventListener('beforeprint',()=>{_saved=[];document.querySelectorAll('details.pt').forEach(d=>{_saved.push(d.open);d.open=true;});});
 window.addEventListener('afterprint',()=>{document.querySelectorAll('details.pt').forEach((d,i)=>{d.open=_saved[i];});});

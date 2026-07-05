@@ -15,7 +15,7 @@ setTimeout(()=>{try{
   const v1=d.querySelector('#vocabBody details');v1.open=true;v1.dispatchEvent(new w.Event('toggle'));
   log('第1級單字卡:',d.querySelectorAll('#vocabBody .wcard').length);
   // 切到練習
-  w.show('practice');
+  w.show('reading');log('閱讀分頁篇數:',d.querySelectorAll('#readingBody details').length);var r1=d.querySelector('#readingBody details');if(r1){r1.open=true;r1.dispatchEvent(new w.Event('toggle'));log('第1篇載入題數:',r1.querySelectorAll('.qcard').length);}w.show('practice');
   log('練習主題列:',d.querySelectorAll('#practiceBody .prcat').length);
   // 開始一個主題測驗
   w.startQuiz('subjunctive');
