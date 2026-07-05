@@ -123,6 +123,7 @@ body = f'''<div class="wrap">
   {reading_tab}
   <button data-view="vocab">🔤 單字</button>
   <button data-view="practice">✏️ 練習</button>
+  <button class="helpbtn" onclick="location.href='https://fullmodel-star.github.io/english-hub/'" aria-label="回入口">⬅ 入口</button>
   <button class="helpbtn" onclick="showWelcome()" aria-label="使用說明">❓ 說明</button>
 </div>
 {welcome_overlay}
