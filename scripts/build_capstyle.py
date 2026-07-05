@@ -173,6 +173,13 @@ body = f'''<div class="wrap">
 RENDER_JS = r'''
 const G=DATA.groups, VOCAB=DATA.vocab, Q=DATA.questions;
 const $=id=>document.getElementById(id);
+const VMAP={};VOCAB.forEach(v=>{VMAP[String(v.w).toLowerCase()]=v;});
+function lookupV(k){return VMAP[k]||VMAP[k.replace(/s$/,'')]||VMAP[k.replace(/es$/,'')]||VMAP[k.replace(/ed$/,'')]||VMAP[k.replace(/ing$/,'')]||VMAP[k.replace(/ies$/,'y')];}
+function wrapWords(t){return t.replace(/([A-Za-z][A-Za-z'\-]*)/g,'<span class="wtap" onclick="tapWord(this)">$1</span>');}
+function tapWord(el){const w=el.textContent;const k=w.toLowerCase().replace(/[^a-z'\-]/g,'');if(k.length<2){return;}const v=lookupV(k);
+  const added=window.EngReview&&EngReview.addWord(w,v?v.z:'',v?(v.p||''):'','閱讀生字');
+  toast(added?('⭐ 已加入生字：'+w+(v&&v.z?'　'+v.z:'（待查，可到入口→我的複習補中文）')):('「'+w+'」已在生字本'));
+  el.classList.add('wdone');}
 const esc=s=>(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 function splitEg(x){const m=x.match(/[一-鿿]/);if(!m)return{en:x,zh:''};const i=x.indexOf(m[0]);return{en:x.slice(0,i).trim(),zh:x.slice(i).trim()};}
 
@@ -209,7 +216,7 @@ function renderReading(){const R=DATA.reading||[];if(!R.length||!$('readingBody'
   $('readingBody').querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>{
     if(!d.open)return;const body=d.querySelector('.body');if(body.dataset.done)return;
     const p=R[+body.dataset.ri];const L=['A','B','C','D'];
-    let hh=`<div class="passage">${p.t?`<div class="pg">${esc(p.t)}</div>`:''}${esc(p.x).replace(/\n/g,'<br>')}</div>`;
+    let hh=`<div class="passage"><div class="wtip">💡 點文章中不會的單字，可加入「生字本」（到入口→我的複習）</div>${p.t?`<div class="pg">${esc(p.t)}</div>`:''}${wrapWords(esc(p.x)).replace(/\n/g,'<br>')}</div>`;
     p.qs.forEach((q,qi)=>{hh+=`<div class="qcard"><div class="stem">${qi+1}. ${esc(q.s)}</div><div class="opts">`;
       q.o.forEach((o,oi)=>{hh+=`<div class="opt ${oi===q.a?'ok':'dis'}"><span class="lab">${L[oi]}</span><span>${esc(o)}</span></div>`;});
       hh+=`</div><div class="fb show good"><div class="kp">✅ 正解 ${L[q.a]}</div>${esc(q.e)}</div></div>`;});
@@ -245,7 +252,7 @@ function pick(i){const q=pool[idx];const ok=(i===q.a);
     if(bi===q.a)b.classList.add('ok');else if(bi===i)b.classList.add('no');});
   const fb=$('fb');fb.className='fb show '+(ok?'good':'bad');
   fb.innerHTML=`<div class="kp">${ok?'✅ 答對了':'❌ 答錯了，正解 '+['A','B','C','D'][q.a]}</div>${esc(q.e)}`;
-  if(ok)score++;else{if(!wrongList.includes(q.s))wrongList.push(q.s);}
+  if(ok)score++;else{if(!wrongList.includes(q.s))wrongList.push(q.s);try{window.EngReview&&EngReview.addWrong({cat:q.u,stem:q.s,options:q.o,your:i,ans:q.a,expl:q.e});}catch(e){}}
   $('nextrow').style.display='flex';}
 function nextQ(){idx++;renderQ();}
 function renderScore(){document.body.classList.remove('quizzing');
@@ -317,6 +324,30 @@ WELCOME_CSS = '''
   .wc-start{width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:800;color:#fff;background:__THEME__;cursor:pointer;margin-top:8px;font-family:inherit}
 '''.replace('__THEME__', THEME)
 
+ENGREVIEW_SRC = r'''(function(){if(window.EngReview)return;
+var WK='engreview.wrong',VK='engreview.words',APP=__APP__;
+function load(k){try{return JSON.parse(localStorage.getItem(k)||'{}')}catch(e){return{}}}
+function save(k,o){try{localStorage.setItem(k,JSON.stringify(o))}catch(e){}}
+function hash(s){var h=0,i;for(i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))|0}return(h>>>0).toString(36)}
+function now(){return Date.now()}
+var BOX=[0,1,3,7,16,40];
+function addWrong(r){var w=load(WK);var id=hash((r.app||APP.id)+'|'+r.stem+'|'+(r.options||[]).join('~'));var e=w[id]||{id:id,first:now(),n:0};
+ e.app=r.app||APP.id;e.appName=r.appName||APP.name;e.cat=r.cat||'其他';e.stem=r.stem;e.options=r.options;e.your=r.your;e.ans=r.ans;e.expl=r.expl||'';
+ e.box=0;e.streak=0;e.due=now();e.n=(e.n||0)+1;e.ts=now();w[id]=e;save(WK,w);}
+function graded(id,ok){var w=load(WK),e=w[id];if(!e)return;if(ok){e.streak=(e.streak||0)+1;e.box=Math.min((e.box||0)+1,BOX.length-1);if(e.streak>=2){delete w[id];save(WK,w);return;}e.due=now()+BOX[e.box]*86400000;}else{e.streak=0;e.box=0;e.due=now();}e.ts=now();w[id]=e;save(WK,w);}
+function addWord(word,zh,pos,cat){var v=load(VK),k=String(word||'').toLowerCase().trim();if(!k)return false;
+ if(!v[k]){v[k]={word:word,zh:zh||'（待查）',pos:pos||'',app:APP.id,appName:APP.name,cat:cat||'',box:0,streak:0,due:now(),ts:now()};save(VK,v);return true;}
+ else{if((!v[k].zh||v[k].zh==='（待查）')&&zh){v[k].zh=zh;save(VK,v);}return false;}}
+function setWordZh(word,zh){var v=load(VK),k=String(word).toLowerCase();if(v[k]){v[k].zh=zh;v[k].box=0;save(VK,v);}}
+function wordGraded(word,ok){var v=load(VK),k=String(word).toLowerCase(),e=v[k];if(!e)return;if(ok){e.streak=(e.streak||0)+1;e.box=Math.min((e.box||0)+1,BOX.length-1);if(e.streak>=2){e.mastered=1;}e.due=now()+BOX[e.box]*86400000;}else{e.streak=0;e.box=0;e.mastered=0;e.due=now();}save(VK,v);}
+function removeWord(word){var v=load(VK);delete v[String(word).toLowerCase()];save(VK,v);}
+function cnt(o,due){var n=0,k;for(k in o){if(!due||o[k].due<=now())n++;}return n;}
+window.EngReview={app:APP,addWrong:addWrong,graded:graded,addWord:addWord,setWordZh:setWordZh,wordGraded:wordGraded,removeWord:removeWord,
+ wrong:function(){return load(WK)},words:function(){return load(VK)},
+ wrongCount:function(d){return cnt(load(WK),d)},wordCount:function(d){return cnt(load(VK),d)}};
+})();'''
+REVIEW_JS = ENGREVIEW_SRC.replace('__APP__', json.dumps({'id': NS, 'name': APP_TITLE}, ensure_ascii=False))
+
 html_out = f'''<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -334,6 +365,7 @@ html_out = f'''<!DOCTYPE html>
 </head>
 <body>
 {body}
+<script>{REVIEW_JS}</script>
 <script>{data_js}</script>
 <script>{RENDER_JS}</script>
 <script>{NAV_JS}</script>
