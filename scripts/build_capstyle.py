@@ -18,6 +18,8 @@ VOCAB_TITLE = '高中 6000 單字'
 VOCAB_BADGE = '大考中心 6 級'
 VOCAB_DESC = '依級別分組，附詞性、中文與例句'
 VOCAB_CMP = '依大考中心 6 級分組，點開級別載入單字卡（含詞性、中文、例句）。'
+WELCOME_EMOJI = '📘'
+WELCOME_TAGLINE = '學測進階文法・重點＋閱讀＋練習一次到位'
 
 master = json.load(open(os.path.join(ROOT, 'data', 'master.json'), encoding='utf-8'))
 css = open(os.path.join(APP, 'capstyle.css'), encoding='utf-8').read()
@@ -97,6 +99,23 @@ reading_view = ('<div class="view" id="v-reading">'
                 '<div id="readingBody"></div>'
                 '<div style="text-align:center"><button class="backtop" data-view="home">🏠 回首頁</button></div></div>') if HAS_READING else ''
 
+# 歡迎卡步驟(依實際分頁)
+steps = [('🧩', '文法重點', '每個主題先讀綠色「白話重點」，再看原創例句。')]
+if HAS_READING:
+    steps.append(('📖', '閱讀', '短文＋題目，正解已標示並附解析。'))
+steps.append(('🔤', '單字', f'{VOCAB_TITLE}依級別分組，點開看單字卡。'))
+steps.append(('✏️', '練習', '各主題選擇題，答完即時看解析，答錯自動進「錯題複習」。'))
+steps.append(('📲', '安裝到桌面', '首頁按安裝，之後免開瀏覽器、可離線使用。'))
+steps_html = ''.join(
+    f'<div class="wc-step"><span class="wc-i">{ic}</span><div><b>{t}</b><div>{d}</div></div></div>'
+    for ic, t, d in steps)
+welcome_overlay = (f'<div class="wc-overlay" id="welcome"><div class="wc-card">'
+                   f'<div class="wc-emoji">{WELCOME_EMOJI}</div>'
+                   f'<h2>歡迎使用 {APP_TITLE}</h2>'
+                   f'<div class="wc-sub">{WELCOME_TAGLINE}</div>'
+                   f'{steps_html}'
+                   f'<button class="wc-start" onclick="closeWelcome()">開始使用 ▶</button></div></div>')
+
 body = f'''<div class="wrap">
 <div class="tabbar">
   <button data-view="home">🏠 首頁</button>
@@ -104,7 +123,9 @@ body = f'''<div class="wrap">
   {reading_tab}
   <button data-view="vocab">🔤 單字</button>
   <button data-view="practice">✏️ 練習</button>
+  <button class="helpbtn" onclick="showWelcome()" aria-label="使用說明">❓ 說明</button>
 </div>
+{welcome_overlay}
 
 <div class="view active" id="v-home">
   <header class="top">
@@ -248,12 +269,16 @@ function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.toggl
   window.scrollTo({top:0,behavior:'auto'});}
 document.querySelectorAll('[data-view]').forEach(el=>{el.addEventListener('click',()=>show(el.dataset.view));
   el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();show(el.dataset.view);}});});
+function showWelcome(){document.getElementById('welcome').classList.add('show');}
+function closeWelcome(){document.getElementById('welcome').classList.remove('show');try{localStorage.setItem('__NS__.onboarded','1');}catch(e){}}
+document.getElementById('welcome').addEventListener('click',function(e){if(e.target.id==='welcome')closeWelcome();});
 renderGram();renderVocab();renderReading();practiceHome();show('home');
+try{if(!localStorage.getItem('__NS__.onboarded'))setTimeout(showWelcome,350);}catch(e){}
 let _saved=[];
 window.addEventListener('beforeprint',()=>{_saved=[];document.querySelectorAll('details.pt').forEach(d=>{_saved.push(d.open);d.open=true;});});
 window.addEventListener('afterprint',()=>{document.querySelectorAll('details.pt').forEach((d,i)=>{d.open=_saved[i];});});
 if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
-'''
+'''.replace('__NS__', NS)
 
 INSTALL_JS = r'''(function(){var deferredPrompt=null;
 function isStandalone(){return (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches)||navigator.standalone===true;}
@@ -276,6 +301,21 @@ INSTALL_CSS = '''
   #installBar .install-x{display:inline-block;margin-top:6px;color:#3f38b8;font-weight:800;cursor:pointer}
 '''.replace('__THEME__', THEME)
 
+WELCOME_CSS = '''
+  .helpbtn{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:8px 13px;font-size:14.5px;font-weight:700;color:var(--ink);cursor:pointer;font-family:inherit}
+  .wc-overlay{position:fixed;inset:0;background:rgba(30,30,42,.55);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);z-index:100;display:none;align-items:center;justify-content:center;padding:18px}
+  .wc-overlay.show{display:flex}
+  .wc-card{background:#fff;border-radius:22px;max-width:400px;width:100%;padding:24px 22px 20px;box-shadow:0 20px 50px rgba(0,0,0,.32);max-height:88vh;overflow:auto;animation:wcIn .25s ease}
+  @keyframes wcIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+  .wc-emoji{font-size:46px;text-align:center;line-height:1}
+  .wc-card h2{text-align:center;margin:8px 0 2px;font-size:22px}
+  .wc-sub{text-align:center;color:var(--soft);font-size:14px;margin-bottom:16px;line-height:1.5}
+  .wc-step{display:flex;gap:11px;align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:11px 13px;margin-bottom:9px}
+  .wc-step .wc-i{font-size:22px;flex:0 0 auto;line-height:1.3}
+  .wc-step b{font-size:15px}.wc-step>div>div{font-size:13px;color:var(--soft);line-height:1.55;margin-top:1px}
+  .wc-start{width:100%;border:0;border-radius:14px;padding:14px;font-size:16px;font-weight:800;color:#fff;background:__THEME__;cursor:pointer;margin-top:8px;font-family:inherit}
+'''.replace('__THEME__', THEME)
+
 html_out = f'''<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
@@ -289,7 +329,7 @@ html_out = f'''<!DOCTYPE html>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <title>{APP_TITLE}</title>
-<style>{css}{INSTALL_CSS}</style>
+<style>{css}{INSTALL_CSS}{WELCOME_CSS}</style>
 </head>
 <body>
 {body}
