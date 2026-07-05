@@ -14,6 +14,10 @@ HERO_SUB = '學測進階文法 <b>18 主題</b>・每個主題白話重點＋原
 HERO_SRC = '內容 AI 原創・依高中課綱與學測範圍編寫・非任何出版社教材'
 NS = 'enghs'            # localStorage 命名空間(避免同源撞資料)
 THEME = '#4338ca'      # 主題色(靛藍)
+VOCAB_TITLE = '高中 6000 單字'
+VOCAB_BADGE = '大考中心 6 級'
+VOCAB_DESC = '依級別分組，附詞性、中文與例句'
+VOCAB_CMP = '依大考中心 6 級分組，點開級別載入單字卡（含詞性、中文、例句）。'
 
 master = json.load(open(os.path.join(ROOT, 'data', 'master.json'), encoding='utf-8'))
 css = open(os.path.join(APP, 'capstyle.css'), encoding='utf-8').read()
@@ -112,9 +116,9 @@ body = f'''<div class="wrap">
   <p style="text-align:center;color:var(--soft);font-size:14.5px;margin:2px 0 4px">👇 點一類開始複習</p>
   <div class="cats">{cats_html}
     {reading_tile}
-    <div class="cat-tile t-vocab" data-view="vocab" tabindex="0" role="button" aria-label="高中單字">
-      <span class="ci">🔤</span><h3>高中 6000 單字</h3><span class="badge">大考中心 6 級</span>
-      <p class="cd">依級別分組，附詞性、中文與例句</p></div>
+    <div class="cat-tile t-vocab" data-view="vocab" tabindex="0" role="button" aria-label="單字">
+      <span class="ci">🔤</span><h3>{VOCAB_TITLE}</h3><span class="badge">{VOCAB_BADGE}</span>
+      <p class="cd">{VOCAB_DESC}</p></div>
   </div>
   <div class="pr-cta" data-view="practice" tabindex="0" role="button">
     <span class="pi">✏️</span><div><b>讀完了？來練習！</b><span>各主題選擇題，答完即時看解析</span></div>
@@ -133,8 +137,8 @@ body = f'''<div class="wrap">
 {reading_view}
 
 <div class="view" id="v-vocab">
-  <div class="sec-head"><span class="ic">🔤</span><h2>高中 6000 單字</h2><span class="cnt">{len(vocab)} 字</span></div>
-  <div class="cmp">依大考中心 6 級分組，點開級別載入單字卡（含詞性、中文、例句）。</div>
+  <div class="sec-head"><span class="ic">🔤</span><h2>{VOCAB_TITLE}</h2><span class="cnt">{len(vocab)} 字</span></div>
+  <div class="cmp">{VOCAB_CMP}</div>
   <div id="vocabBody"></div>
   <div style="text-align:center"><button class="backtop" data-view="home">🏠 回首頁</button></div></div>
 
