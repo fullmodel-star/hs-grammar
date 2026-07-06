@@ -215,12 +215,27 @@ function renderReading(){const R=DATA.reading||[];if(!R.length||!$('readingBody'
   $('readingBody').innerHTML=h;
   $('readingBody').querySelectorAll('details').forEach(d=>d.addEventListener('toggle',()=>{
     if(!d.open)return;const body=d.querySelector('.body');if(body.dataset.done)return;
-    const p=R[+body.dataset.ri];const L=['A','B','C','D'];
-    let hh=`<div class="passage"><div class="wtip">💡 點文章中不會的單字，可加入「生字本」（到入口→我的複習）</div>${p.t?`<div class="pg">${esc(p.t)}</div>`:''}${wrapWords(esc(p.x)).replace(/\n/g,'<br>')}</div>`;
+    const p=R[+body.dataset.ri];const L=['A','B','C','D'];const sel={};
+    let hh=`<div class="passage"><div class="wtip">💡 讀完整篇、作答完再按下方「對答案」；點文章不會的單字可加入生字本</div>${p.t?`<div class="pg">${esc(p.t)}</div>`:''}${wrapWords(esc(p.x)).replace(/\n/g,'<br>')}</div>`;
     p.qs.forEach((q,qi)=>{hh+=`<div class="qcard"><div class="stem">${qi+1}. ${esc(q.s)}</div><div class="opts">`;
-      q.o.forEach((o,oi)=>{hh+=`<div class="opt ${oi===q.a?'ok':'dis'}"><span class="lab">${L[oi]}</span><span>${esc(o)}</span></div>`;});
-      hh+=`</div><div class="fb show good"><div class="kp">✅ 正解 ${L[q.a]}</div>${esc(q.e)}</div></div>`;});
-    body.innerHTML=hh;body.dataset.done='1';}));}
+      q.o.forEach((o,oi)=>{hh+=`<div class="opt" data-qi="${qi}" data-oi="${oi}"><span class="lab">${L[oi]}</span><span>${esc(o)}</span></div>`;});
+      hh+=`</div><div class="fb" data-fb="${qi}"></div></div>`;});
+    hh+=`<button class="rd-check" data-check>✅ 對答案（${p.qs.length} 題）</button>`;
+    body.innerHTML=hh;body.dataset.done='1';
+    body.querySelectorAll('.opt').forEach(el=>el.addEventListener('click',()=>{
+      if(body.dataset.checked)return;const qi=+el.dataset.qi;
+      body.querySelectorAll('.opt[data-qi="'+qi+'"]').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel');sel[qi]=+el.dataset.oi;}));
+    body.querySelector('[data-check]').addEventListener('click',function(){
+      if(body.dataset.checked)return;body.dataset.checked='1';let correct=0;
+      p.qs.forEach((q,qi)=>{const pick=(qi in sel)?sel[qi]:null;
+        body.querySelectorAll('.opt[data-qi="'+qi+'"]').forEach(x=>{const oi=+x.dataset.oi;x.classList.add('dis');x.classList.remove('sel');if(oi===q.a)x.classList.add('ok');else if(oi===pick)x.classList.add('no');});
+        const ok=pick===q.a;if(ok)correct++;
+        const fb=body.querySelector('[data-fb="'+qi+'"]');fb.className='fb show '+(ok?'good':'bad');
+        fb.innerHTML=`<div class="kp">${ok?'✅ 答對':(pick==null?'⬜ 未作答':'❌ 答錯')}・正解 ${L[q.a]}</div>${esc(q.e)}`;
+        if(!ok){try{window.EngReview&&EngReview.addWrong({cat:'閱讀·'+p.g,stem:q.s,options:q.o,your:(pick==null?0:pick),ans:q.a,expl:q.e});}catch(e){}}});
+      this.outerHTML=`<div class="rd-score">本篇答對 ${correct}/${p.qs.length} 題${correct<p.qs.length?'　答錯的已收進「📝 複習」':' 🎉'}</div>`;});
+  }));}
 
 // ===== 練習 =====
 let pool=[],idx=0,score=0,wrongList=[];
