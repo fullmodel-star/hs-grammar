@@ -1,0 +1,208 @@
+/* 活潑層 engine：grammar（917 高中英語文法／923～926 國中文法題庫）
+   來源：packages/lively/engines/grammar.css → 各 App 的 lively-engine.css
+   兩種畫面結構由 grammar.js 寫在 html[data-lv-gram]：jr＝923～926、hs＝917（見 grammar.js 開頭說明）。
+   作業簿版（2026-10-19）：米白方格紙、按鈕中淺色底＋深色字、線條圖示、選項短語在四線格上、結果頁紅筆圈章。 */
+
+/* =====================================================================
+   jr：923～926（跟 915/916 題庫同一套畫面）
+   App 自己的深色寫在 :root[data-theme=dark] 與 @media(dark){:root:not([data-theme=light])}（權重 0,2,0），
+   這裡用 html[data-lv-gram]:root:root（0,3,1）＋ body 蓋過；--lv-* 本身已依 data-theme／跟系統切換。
+   ===================================================================== */
+html[data-lv-gram="jr"]:root:root,html[data-lv-gram="jr"] body{
+  --bg:var(--lv-paper); --card:var(--lv-card); --line:var(--lv-line); --ink:var(--lv-text); --sub:var(--lv-muted);
+  --accent:var(--lv-acc); --accent2:var(--lv-soft2); --soft:var(--lv-soft); --accent-fg:var(--lv-acc);
+  --good:var(--lv-ok); --goodbg:var(--lv-ok-soft); --bad:var(--lv-no); --badbg:var(--lv-no-soft); --gold:#E0A43A;
+  --gx-pop:var(--lv-btn); --gx-pop-fg:var(--lv-ink);
+  --shadow:0 0 0 1px var(--lv-line),0 4px 14px rgba(60,50,30,.06);
+}
+html[data-lv-gram="jr"][data-theme="dark"] body{--shadow:0 0 0 1px var(--lv-line)}
+@media (prefers-color-scheme:dark){html[data-lv-gram="jr"]:not([data-theme]) body{--shadow:0 0 0 1px var(--lv-line)}}
+html[data-lv-gram="jr"],html[data-lv-gram="jr"] body{background-color:var(--lv-paper)}
+
+/* 頁首：淡主色底（核心）。GRAM_UX 把副標寫死白字（原本深色頁首用）→ 改回灰字；齒輪鈕同家族外觀 */
+html .rl-appbar .rl-sub{color:var(--lv-muted)}
+[data-lv-gram="jr"] .rl-appbar .iconbtn{width:44px;height:44px;border-radius:13px;background:var(--lv-card);color:var(--lv-text);font-size:20px;
+  box-shadow:0 0 0 1.5px var(--lv-line),0 3px 0 var(--lv-line)}
+[data-lv-gram="jr"] .rl-appbar .iconbtn:active{transform:translateY(2px);box-shadow:0 0 0 1.5px var(--lv-line),0 1px 0 var(--lv-line)}
+/* 深色：頁首／頁尾山形換同資料夾的官方白色版（各支山名不同，核心只會換 everest） */
+html[data-theme="dark"] .rl-appbar img.rl-glyph[src*="denali"],html[data-theme="dark"] .rl-signature img.rl-sig-glyph[src*="denali"]{content:url(rl-mark-denali-white.png)}
+html[data-theme="dark"] .rl-appbar img.rl-glyph[src*="kilimanjaro"],html[data-theme="dark"] .rl-signature img.rl-sig-glyph[src*="kilimanjaro"]{content:url(rl-mark-kilimanjaro-white.png)}
+html[data-theme="dark"] .rl-appbar img.rl-glyph[src*="aconcagua"],html[data-theme="dark"] .rl-signature img.rl-sig-glyph[src*="aconcagua"]{content:url(rl-mark-aconcagua-white.png)}
+html[data-theme="dark"] .rl-appbar img.rl-glyph[src*="k2"],html[data-theme="dark"] .rl-signature img.rl-sig-glyph[src*="k2"]{content:url(rl-mark-k2-white.png)}
+@media (prefers-color-scheme:dark){
+  html:not([data-theme]) .rl-appbar img.rl-glyph[src*="denali"],html:not([data-theme]) .rl-signature img.rl-sig-glyph[src*="denali"]{content:url(rl-mark-denali-white.png)}
+  html:not([data-theme]) .rl-appbar img.rl-glyph[src*="kilimanjaro"],html:not([data-theme]) .rl-signature img.rl-sig-glyph[src*="kilimanjaro"]{content:url(rl-mark-kilimanjaro-white.png)}
+  html:not([data-theme]) .rl-appbar img.rl-glyph[src*="aconcagua"],html:not([data-theme]) .rl-signature img.rl-sig-glyph[src*="aconcagua"]{content:url(rl-mark-aconcagua-white.png)}
+  html:not([data-theme]) .rl-appbar img.rl-glyph[src*="k2"],html:not([data-theme]) .rl-signature img.rl-sig-glyph[src*="k2"]{content:url(rl-mark-k2-white.png)}
+}
+
+/* 數字用圓體（只含拉丁字，中文自動退回系統字） */
+[data-lv-gram] .stat b,[data-lv-gram] .result .score,[data-lv-gram] .qhead .cnt,[data-lv-gram] .opt .k,[data-lv-gram] .opt .lab,
+[data-lv-gram] .scorebox .big,[data-lv-gram] .gx-prog .gx-s b,[data-lv-gram] .gx-done b{font-family:"LvNum",-apple-system,"Segoe UI",system-ui,"PingFang TC","Microsoft JhengHei",sans-serif}
+
+/* ---------- 首頁：三格統計（彩色插圖）、首訪卡、模式卡、單元清單 ---------- */
+[data-lv-gram="jr"] .stat{border-radius:20px;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line)}
+[data-lv-gram="jr"] .stat .lv-stat-art{display:block;width:30px;height:30px;margin:0 auto 4px}
+[data-lv-gram="jr"] .stat b{font-size:1.7rem;font-weight:900;color:var(--lv-acc)}
+[data-lv-gram="jr"] .sect{color:var(--lv-muted)}
+[data-lv-gram="jr"] .gx-welcome{background:linear-gradient(160deg,var(--lv-soft) 0%,var(--lv-sun-soft) 100%);border:0;border-radius:22px;box-shadow:0 0 0 1.5px var(--lv-line)}
+[data-lv-gram="jr"] .gx-welcome button{background:var(--lv-btn);color:var(--lv-ink);border-radius:18px;box-shadow:0 5px 0 var(--lv-btn-d)}
+[data-lv-gram="jr"] .gx-welcome button:active{transform:translateY(4px);box-shadow:0 1px 0 var(--lv-btn-d)}
+[data-lv-gram="jr"] .mode{border:0;border-radius:20px;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line);transition:transform .08s,box-shadow .08s}
+[data-lv-gram="jr"] .mode:not([disabled]):active{transform:translateY(3px);box-shadow:0 0 0 1.5px var(--lv-line),0 1px 0 var(--lv-line)}
+[data-lv-gram="jr"] .mode .mi{width:48px;height:48px;border-radius:15px;display:flex;align-items:center;justify-content:center;background:var(--lv-soft);color:var(--lv-acc);font-size:24px;line-height:1;flex:0 0 auto}
+/* 色塊裡的線條圖示（只在模式卡／練習選單；底部選單不上色塊） */
+[data-lv-gram] .mode .mi[data-tint="sun"],[data-lv-gram] .prcat .pci[data-tint="sun"]{background:var(--lv-sun-soft);color:var(--lv-sun)}
+[data-lv-gram] .mode .mi[data-tint="coral"],[data-lv-gram] .prcat .pci[data-tint="coral"]{background:var(--lv-no-soft);color:var(--lv-no)}
+[data-lv-gram] .mode .mi[data-tint="green"],[data-lv-gram] .prcat .pci[data-tint="green"]{background:var(--lv-ok-soft);color:var(--lv-ok)}
+[data-lv-gram="jr"] .pbtn{border:0;border-radius:16px;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line);transition:transform .08s,box-shadow .08s}
+[data-lv-gram="jr"] .pbtn:active{transform:translateY(3px);box-shadow:0 0 0 1.5px var(--lv-line),0 1px 0 var(--lv-line)}
+[data-lv-gram="jr"] .pbtn.on{background:var(--lv-soft);color:var(--lv-acc);box-shadow:0 0 0 2px var(--lv-btn),0 4px 0 var(--lv-btn-d)}
+[data-lv-gram="jr"] .chip,[data-lv-gram="jr"] .tag{background:var(--lv-soft);color:var(--lv-acc)}
+[data-lv-gram="jr"] .point-card{background:var(--lv-card);box-shadow:0 0 0 1.5px var(--lv-line);border-left:5px solid var(--lv-btn);border-radius:14px}
+[data-lv-gram="jr"] details.points summary{color:var(--lv-acc)}
+[data-lv-gram="jr"] .uf-pts-link{border:0;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line);border-radius:16px}
+[data-lv-gram="jr"] .uf-pts-link svg{color:var(--lv-acc)}
+[data-lv-gram="jr"] .uf-next{background:var(--lv-btn);color:var(--lv-ink);border-radius:16px;box-shadow:0 4px 0 var(--lv-btn-d)}
+[data-lv-gram="jr"] .uf-next:active{transform:translateY(3px);box-shadow:0 1px 0 var(--lv-btn-d)}
+[data-lv-gram="jr"] .back{color:var(--lv-acc);min-height:44px}
+/* 924 單字表 */
+[data-lv-gram="jr"] .vw b,[data-lv-gram="jr"] .vw .w{font-family:"LvWord","LvNum",-apple-system,"Segoe UI",system-ui,sans-serif}
+
+/* ---------- 作答 ---------- */
+[data-lv-gram="jr"] .qhead .prog{background:var(--lv-line)}
+[data-lv-gram="jr"] .qhead .prog i{background:var(--lv-btn);border-radius:99px}
+[data-lv-gram="jr"] .stem{font-size:1.1rem}
+[data-lv-gram="jr"] .expl{border-left-color:var(--lv-btn);background:var(--lv-soft)}
+[data-lv-gram="jr"] .opt{border:0;border-radius:16px;box-shadow:0 0 0 1.5px var(--lv-line),0 3px 0 var(--lv-line);align-items:center}
+[data-lv-gram="jr"] .opt:not([disabled]):active{transform:translateY(3px);box-shadow:0 0 0 1.5px var(--lv-line),0 0 0 var(--lv-line)}
+[data-lv-gram="jr"] .opt .k{flex:0 0 30px;height:30px;border-radius:10px;background:var(--lv-soft);color:var(--lv-acc);font-weight:800}
+[data-lv-gram="jr"] .opt.sel{background:var(--lv-soft);box-shadow:0 0 0 2px var(--lv-btn),0 3px 0 var(--lv-btn-d)}
+[data-lv-gram="jr"] .opt.correct{background:var(--lv-ok-soft);color:var(--lv-ok);box-shadow:0 0 0 2px var(--lv-ok-line),0 3px 0 var(--lv-ok-line)}
+[data-lv-gram="jr"] .opt.correct .k{background:var(--lv-ok-k);color:#fff}
+[data-lv-gram="jr"] .opt.wrong{background:var(--lv-no-soft);color:var(--lv-no);box-shadow:0 0 0 2px var(--lv-no-line),0 3px 0 var(--lv-no-line)}
+[data-lv-gram="jr"] .opt.wrong .k{background:var(--lv-no-k);color:#fff}
+[data-lv-gram="jr"] .fb{border-radius:14px}
+[data-lv-gram="jr"] .fb.ok{background:var(--lv-ok-soft);color:var(--lv-ok)}
+[data-lv-gram="jr"] .fb.no{background:var(--lv-no-soft);color:var(--lv-no)}
+[data-lv-gram="jr"] .foot{background:var(--lv-card);border-top-color:var(--lv-line)}
+
+/* ---------- 按鈕：中淺色底＋深色字、有厚度 ---------- */
+[data-lv-gram="jr"] .btn{background:var(--lv-btn);color:var(--lv-ink);border-radius:16px;box-shadow:0 4px 0 var(--lv-btn-d);transition:transform .08s,box-shadow .08s}
+[data-lv-gram="jr"] .btn:not(:disabled):active{transform:translateY(3px);box-shadow:0 1px 0 var(--lv-btn-d)}
+[data-lv-gram="jr"] .btn.ghost{background:var(--lv-card);color:var(--lv-text);border:0;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line)}
+[data-lv-gram="jr"] .btn:disabled{box-shadow:none}
+[data-lv-gram="jr"] .switch.on{background:var(--lv-btn)}
+
+/* ---------- 結果頁：插圖＋紅筆圈章（宿主 .result 要 relative） ---------- */
+[data-lv-gram="jr"] #v-result .result{position:relative;border-radius:22px;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line)}
+[data-lv-gram="jr"] .result .score{color:var(--lv-acc)}
+[data-lv-gram] .lv-res-art{display:block;width:64px;height:64px;margin:0 auto 8px}
+[data-lv-gram="jr"] .card{border-radius:20px}
+[data-lv-gram="jr"] .rev-item{border-radius:14px}
+[data-lv-gram="jr"] .bar .track{background:var(--lv-line)}
+
+/* ---------- 底部選單：線條圖示，選中那格淡色底 ---------- */
+[data-lv-gram="jr"] .nav{background:var(--lv-card);border-top-color:var(--lv-line)}
+[data-lv-gram="jr"] .nav button{min-height:56px}
+[data-lv-gram="jr"] .nav button .ni{display:flex;align-items:center;justify-content:center;width:48px;height:30px;margin:0 auto 1px;border-radius:15px;transition:background .2s}
+[data-lv-gram="jr"] .nav button .ni .lv-line{width:23px;height:23px}
+[data-lv-gram="jr"] .nav button.on{color:var(--lv-acc);background:transparent}
+[data-lv-gram="jr"] .nav button.on .ni{background:var(--lv-soft)}
+[data-lv-gram="jr"] .nav button.on .ni .lv-line{stroke-width:2.2}
+[data-lv-gram="jr"] .nav button.on::before{background:var(--lv-btn)}
+@media (prefers-reduced-motion:no-preference){[data-lv-gram] .nav button.on .ni .lv-line{animation:lvPop .4s cubic-bezier(.3,1.6,.5,1)}}
+
+/* =====================================================================
+   hs：917 高中英語文法（App 沒有深色模式 → grammar.js 固定 data-theme=light）
+   App 變數：--pink 主色（GRAM_UX 已改湖藍）、--pink-bg 淡底、--soft／--muted 是「輔助字色」、--ok／--no 對錯
+   ===================================================================== */
+html[data-lv-gram="hs"]:root:root,html[data-lv-gram="hs"] body{
+  --bg:var(--lv-paper); --card:var(--lv-card); --line:var(--lv-line); --ink:var(--lv-text);
+  --soft:var(--lv-muted); --muted:var(--lv-muted); --pink:var(--lv-acc); --pink-bg:var(--lv-soft); --gx-acc:var(--lv-btn);
+  --ok:var(--lv-ok); --ok-bg:var(--lv-ok-soft); --no:var(--lv-no); --no-bg:var(--lv-no-soft);
+}
+html[data-lv-gram="hs"],html[data-lv-gram="hs"] body{background-color:var(--lv-paper)}
+/* 頁首：原本深湖藍底配白色山形 → 淡底改用同一座山的深色版（品牌既有檔） */
+[data-lv-gram="hs"] .rl-appbar img.rl-glyph[src*="white"]{content:url(rl-mark-everest-navy.png)}
+[data-lv-gram="hs"] .rl-appbar{box-shadow:0 0 0 1.5px var(--lv-soft2)}
+/* 分頁列：米白底、選中＝中淺色底＋深色字（原本整排湖藍實心） */
+[data-lv-gram="hs"] .tabbar{background:var(--lv-paper);border-bottom-color:var(--lv-line)}
+[data-lv-gram="hs"] .tabbar button{border:0;background:var(--lv-card);color:var(--lv-text);box-shadow:0 0 0 1.5px var(--lv-line),0 3px 0 var(--lv-line)}
+html[data-lv-gram="hs"] .tabbar button.active,html[data-lv-gram="hs"] .tabbar button.active[data-view]{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 3px 0 var(--lv-btn-d)}
+[data-lv-gram="hs"] .tabbar .gx-ti{display:flex;align-items:center;justify-content:center;height:24px}
+[data-lv-gram="hs"] .tabbar .gx-ti .lv-line{width:22px;height:22px}
+/* 首頁 */
+[data-lv-gram="hs"] header.top{background:linear-gradient(160deg,var(--lv-soft) 0%,var(--lv-sun-soft) 100%);border:0;box-shadow:0 0 0 1.5px var(--lv-line)}
+[data-lv-gram="hs"] header.top .src{background:var(--lv-card)}
+[data-lv-gram="hs"] .gx-go{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 5px 0 var(--lv-btn-d)}
+[data-lv-gram="hs"] .gx-go:active{transform:translateY(4px);box-shadow:0 1px 0 var(--lv-btn-d)}
+[data-lv-gram="hs"] .gx-sec{border:0;background:var(--lv-card);color:var(--lv-acc);box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line)}
+[data-lv-gram="hs"] .gx-prog{border:0;border-radius:18px;box-shadow:0 0 0 1.5px var(--lv-line)}
+[data-lv-gram="hs"] .gx-prog .gx-s b{color:var(--lv-acc)}
+html[data-lv-gram="hs"] .cat-tile{border:0;border-radius:22px;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line);border-top:0}
+[data-lv-gram="hs"] .cat-tile .ci{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:var(--lv-soft);color:var(--lv-acc)}
+[data-lv-gram="hs"] .cat-tile .ci .lv-line{width:28px;height:28px}
+[data-lv-gram="hs"] .t-pattern .ci{background:var(--lv-ok-soft);color:var(--lv-ok)}
+[data-lv-gram="hs"] .t-phrase .ci{background:var(--lv-sun-soft);color:var(--lv-sun)}
+[data-lv-gram="hs"] .t-vocab .ci{background:var(--lv-no-soft);color:var(--lv-no)}
+html[data-lv-gram="hs"] .cat-tile .badge{background:var(--lv-soft);color:var(--lv-acc)}
+[data-lv-gram="hs"] .howto{border:0;box-shadow:0 0 0 1.5px var(--lv-line);border-radius:18px}
+[data-lv-gram="hs"] #installBar .install-btn:not(.sec){background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 4px 0 var(--lv-btn-d)}
+/* 文法重點、閱讀、單字 */
+[data-lv-gram="hs"] details.pt{border:0;box-shadow:0 0 0 1.5px var(--lv-line),0 3px 0 var(--lv-line)}
+[data-lv-gram="hs"] .sec-head{border-bottom-color:var(--lv-soft2)}
+[data-lv-gram="hs"] .sec-head .ic .lv-ico{width:30px;height:30px}
+[data-lv-gram="hs"] .uf-toc{border:0;border-radius:18px;box-shadow:0 0 0 1.5px var(--lv-line)}
+[data-lv-gram="hs"] .uf-toc .uf-tg{color:var(--lv-acc)}
+[data-lv-gram="hs"] .uf-toc button{background:var(--lv-card);border-color:var(--lv-soft2)}
+[data-lv-gram="hs"] .wcard .w.lv-four{display:inline-block}
+/* 練習選單 */
+[data-lv-gram="hs"] .prcat{border:0;border-left:0!important;border-radius:18px;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line)}
+[data-lv-gram="hs"] .prcat:active{transform:translateY(3px);box-shadow:0 0 0 1.5px var(--lv-line),0 1px 0 var(--lv-line)}
+[data-lv-gram="hs"] .prcat .pci{width:46px;height:46px;border-radius:14px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;background:var(--lv-soft);color:var(--lv-acc)}
+[data-lv-gram="hs"] .prcat .pci .lv-line{width:24px;height:24px}
+[data-lv-gram="hs"] .prcat .arrowr{color:var(--lv-acc)}
+[data-lv-gram="hs"] .pr-cta{border:0;box-shadow:0 0 0 1.5px var(--lv-soft2)}
+[data-lv-gram="hs"] .pr-cta .go,[data-lv-gram="hs"] .pr-note button{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 3px 0 var(--lv-btn-d)}
+/* 作答 */
+[data-lv-gram="hs"] .topbar h2{color:var(--lv-text)}
+[data-lv-gram="hs"] .back{border:0;background:var(--lv-card);color:var(--lv-text);min-height:44px;box-shadow:0 0 0 1.5px var(--lv-line),0 3px 0 var(--lv-line)}
+[data-lv-gram="hs"] .qcard{border:0;border-radius:22px;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line)}
+[data-lv-gram="hs"] .qtag{background:var(--lv-soft);color:var(--lv-acc)}
+[data-lv-gram="hs"] .prog{background:var(--lv-line)}
+[data-lv-gram="hs"] .prog>i{background:var(--lv-btn)}
+[data-lv-gram="hs"] .opt{border:0;border-radius:16px;box-shadow:0 0 0 1.5px var(--lv-line),0 3px 0 var(--lv-line);align-items:center}
+[data-lv-gram="hs"] .opt:not(.dis):active{transform:translateY(3px);box-shadow:0 0 0 1.5px var(--lv-line),0 0 0 var(--lv-line)}
+[data-lv-gram="hs"] .opt .lab{flex:0 0 30px;height:30px;border-radius:10px;background:var(--lv-soft);color:var(--lv-acc);display:grid;place-items:center}
+[data-lv-gram="hs"] .opt.ok{background:var(--lv-ok-soft);color:var(--lv-ok);box-shadow:0 0 0 2px var(--lv-ok-line),0 3px 0 var(--lv-ok-line)}
+[data-lv-gram="hs"] .opt.ok .lab{background:var(--lv-ok-k);color:#fff}
+[data-lv-gram="hs"] .opt.no{background:var(--lv-no-soft);color:var(--lv-no);box-shadow:0 0 0 2px var(--lv-no-line),0 3px 0 var(--lv-no-line)}
+[data-lv-gram="hs"] .opt.no .lab{background:var(--lv-no-k);color:#fff}
+[data-lv-gram="hs"] .fb{border-radius:14px;border:0}
+[data-lv-gram="hs"] .fb.good{background:var(--lv-ok-soft)}
+[data-lv-gram="hs"] .fb.bad{background:var(--lv-no-soft)}
+[data-lv-gram="hs"] .fb.good .kp{color:var(--lv-ok)}
+[data-lv-gram="hs"] .fb.bad .kp{color:var(--lv-no)}
+[data-lv-gram="hs"] .btn.primary{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 4px 0 var(--lv-btn-d)}
+[data-lv-gram="hs"] .btn.primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--lv-btn-d)}
+[data-lv-gram="hs"] .btn.ghost{border:0;background:var(--lv-card);box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line)}
+[data-lv-gram="hs"] .printbtn{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 4px 0 var(--lv-btn-d)}
+/* 結果頁：插圖＋紅筆圈章（宿主 .scorebox 要 relative） */
+[data-lv-gram="hs"] .scorebox{position:relative;border:0;border-radius:22px;box-shadow:0 0 0 1.5px var(--lv-line),0 4px 0 var(--lv-line)}
+[data-lv-gram="hs"] .scorebox .big{color:var(--lv-acc)}
+[data-lv-gram="hs"] .rev{border:0;border-radius:16px;box-shadow:0 0 0 1.5px var(--lv-line)}
+[data-lv-gram="hs"] .rev .rex{background:var(--lv-soft)}
+/* 首訪說明卡（App 自己的 #welcome） */
+[data-lv-gram="hs"] .wc-step .wc-i .lv-ico{width:26px;height:26px}
+[data-lv-gram="hs"] .wc-start{background:var(--lv-btn);color:var(--lv-ink);box-shadow:0 4px 0 var(--lv-btn-d)}
+
+/* ---------- 兩種共用：四線格選項（.lv-four 由 grammar.js 只加在短語上） ---------- */
+/* 只寬到字的長度、字放大（四線格的線位要夠大才看得出是格線，不像刪除線） */
+[data-lv-gram] .opt .lv-four{flex:0 1 auto!important;font-size:1.22rem;padding:0 .35em;border-radius:4px}
+[data-lv-gram] .opt.correct .lv-four,[data-lv-gram] .opt.ok .lv-four,[data-lv-gram] .opt.wrong .lv-four,[data-lv-gram] .opt.no .lv-four{color:inherit}
+/* 線條圖示在按鈕文字裡 */
+[data-lv-gram] .btn .lv-line-inline,[data-lv-gram] .back .lv-line-inline{width:1.1em;height:1.1em}
+@media (prefers-reduced-motion:no-preference){
+  [data-lv-gram] .lv-res-art{animation:lvBob 2.4s ease-in-out infinite}
+}
